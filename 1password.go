@@ -11,10 +11,12 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/docker/docker-credential-helpers/credentials"
+	"github.com/flexwie/docker-credentials-1password/pkg/config"
 )
 
 type Onepassword struct {
-	Log log.Logger
+	Log    log.Logger
+	Config config.Config
 }
 
 func (o Onepassword) Add(creds *credentials.Credentials) error {
@@ -75,7 +77,7 @@ func (o Onepassword) Get(serverUrl string) (string, string, error) {
 	urlHash, _ := hashUrl(serverUrl)
 	logger.Debug("created url hash", "content", urlHash)
 
-	path := fmt.Sprintf("credentials.%s", serverUrl)
+	path := fmt.Sprintf("credentials.%s", urlHash)
 	logger.Debug("created path", "content", path)
 
 	out, err := exec.Command("op", "item", "get", "Docker", "--fields", path).CombinedOutput()
@@ -83,16 +85,17 @@ func (o Onepassword) Get(serverUrl string) (string, string, error) {
 		return "", "", errors.New(string(out))
 	}
 
-	var dec []byte
-	_, err = base64.StdEncoding.Decode(dec, out)
+	dec := make([]byte, base64.StdEncoding.DecodedLen(len(out)))
+	n, err := base64.StdEncoding.Decode(dec, out)
 	if err != nil {
 		return "", "", err
 	}
+	dec = dec[:n]
 
 	logger.Debug("decoded base64", "content", string(dec))
 
 	var result *credentials.Credentials
-	err = json.Unmarshal(dec, result)
+	err = json.Unmarshal(dec, &result)
 	if err != nil {
 		return "", "", err
 	}
@@ -103,11 +106,7 @@ func (o Onepassword) Get(serverUrl string) (string, string, error) {
 }
 
 func (o Onepassword) List() (map[string]string, error) {
-	if err := evalOp(); err != nil {
-		return nil, errors.New("could not find op cli")
-	}
-
-	return nil, nil
+	return nil, errors.New("method not implemented")
 }
 
 func evalOp() error {

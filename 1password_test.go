@@ -19,9 +19,13 @@ func TestOpStore(t *testing.T) {
 
 	store := Onepassword{Log: logger}
 
+	logger.Info("Test adding")
+
 	if err := store.Add(creds); err != nil {
 		t.Fatal(err)
 	}
+
+	logger.Info("Test getting")
 
 	username, secret, err := store.Get(creds.ServerURL)
 	if err != nil {
@@ -34,6 +38,8 @@ func TestOpStore(t *testing.T) {
 	if secret != creds.Secret {
 		t.Fatalf("expected %s, got %s", creds.Secret, secret)
 	}
+
+	logger.Info("Test delete")
 
 	if err = store.Delete(creds.ServerURL); err != nil {
 		t.Fatal(err)
